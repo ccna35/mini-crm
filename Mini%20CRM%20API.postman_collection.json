@@ -1,0 +1,204 @@
+{
+  "info": {
+    "_postman_id": "mini-crm-api-collection",
+    "name": "Mini CRM API",
+    "description": "Production-grade Mini CRM API with lead management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API is running and healthy"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "Create Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{leadName}}\",\n  \"email\": \"{{leadEmail}}\",\n  \"phone\": \"{{leadPhone}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads"]
+            },
+            "description": "Create a new lead"
+          },
+          "response": []
+        },
+        {
+          "name": "List Leads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "NEW",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "isOverdue",
+                  "value": "false",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "disabled": true
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List all leads with pagination and filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lead by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            },
+            "description": "Get a lead by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Lead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONTACTED\",\n  \"phone\": \"+1-555-9999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            },
+            "description": "Update a lead"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Lead",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            },
+            "description": "Delete a lead"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Overdue Followups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads/overdue",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "overdue"]
+            },
+            "description": "Get leads with overdue followups"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Upcoming Followups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads/upcoming",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "upcoming"]
+            },
+            "description": "Get leads with upcoming followups (next 7 days)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "stats"]
+            },
+            "description": "Get comprehensive dashboard statistics"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
