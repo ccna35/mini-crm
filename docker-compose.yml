@@ -1,29 +1,20 @@
-version: '3.8'
-
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: mini-crm-postgres
+    restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-crm_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-crm_password}
-      POSTGRES_DB: ${DB_NAME:-mini_crm}
-      TZ: UTC
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mini_crm
     ports:
-      - '${DB_PORT:-5432}:5432'
+      - '5433:5432' # map to 5433 to avoid conflict with local postgres if any
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-crm_user}']
-      interval: 10s
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - mini-crm-network
 
 volumes:
-  postgres_data:
-
-networks:
-  mini-crm-network:
-    driver: bridge
+  postgres_data_dev:
