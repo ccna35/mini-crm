@@ -8,6 +8,13 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // add cors support
+  app.enableCors({
+    origin: '*', // Allow all origins (for development). In production, specify allowed origins.
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept',
+  });
+
   // Prefix all routes with /api
   app.setGlobalPrefix('api');
 

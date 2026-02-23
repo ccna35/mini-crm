@@ -292,6 +292,14 @@ export class ListLeadsQueryDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({
+    example: 'Facebook',
+    description: 'Filter by lead source',
+  })
+  @IsOptional()
+  @IsString()
+  source?: string;
+
   @ApiProperty({
     example: 'true',
     description:

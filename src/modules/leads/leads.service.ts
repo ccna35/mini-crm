@@ -50,11 +50,17 @@ export class LeadsService {
       where.status = query.status;
     }
 
+    // Filter by source
+    if (query.source) {
+      where.source = { contains: query.source, mode: 'insensitive' };
+    }
+
     // Filter by search (name or email)
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
         { email: { contains: query.search, mode: 'insensitive' } },
+        { source: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -197,5 +203,19 @@ export class LeadsService {
         nextFollowUpAt: 'asc',
       },
     });
+  }
+
+  async getSources(): Promise<{ source: string; count: number }[]> {
+    const result = await this.prisma.lead.groupBy({
+      by: ['source'],
+      _count: {
+        source: true,
+      },
+    });
+
+    return result.map((item) => ({
+      source: item.source || 'Unknown',
+      count: item._count.source,
+    }));
   }
 }

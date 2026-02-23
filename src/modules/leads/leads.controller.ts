@@ -85,6 +85,17 @@ export class LeadsController {
     return this.leadsService.getUpcomingFollowups(7);
   }
 
+  // get sources
+  @Get('sources')
+  @ApiOperation({ summary: 'Get all unique lead sources' })
+  @ApiOkResponse({
+    description: 'List of unique lead sources',
+    type: [Object],
+  })
+  async getSources(): Promise<{ source: string; count: number }[]> {
+    return this.leadsService.getSources();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a lead by ID' })
   @ApiOkResponse({
