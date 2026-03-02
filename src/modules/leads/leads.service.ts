@@ -17,10 +17,8 @@ export class LeadsService {
 
   async create(createLeadDto: CreateLeadDto): Promise<Lead> {
     try {
-      const data: any = {
-        name: createLeadDto.name,
-        phone: createLeadDto.phone,
-        status: LeadStatus.NEW,
+      const data: CreateLeadDto = {
+        ...createLeadDto,
       };
 
       if (createLeadDto.email !== undefined) {
@@ -143,6 +141,11 @@ export class LeadsService {
           name: updateLeadDto.name,
           phone: updateLeadDto.phone,
           status: updateLeadDto.status,
+          source: updateLeadDto.source,
+          company: updateLeadDto.company,
+          email: updateLeadDto.email,
+          notes: updateLeadDto.notes,
+          value: updateLeadDto.value,
           lostReason: updateLeadDto.lostReason,
           nextFollowUpAt:
             nextFollowUpAt !== undefined
