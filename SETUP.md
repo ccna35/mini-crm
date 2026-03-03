@@ -52,6 +52,7 @@ cat .env.local
 DATABASE_URL=postgresql://crm_user:crm_password@localhost:5432/mini_crm?schema=public
 NODE_ENV=development
 PORT=3000
+REDIS_URL=redis://localhost:6379
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=crm_user
@@ -59,14 +60,14 @@ DB_PASSWORD=crm_password
 DB_NAME=mini_crm
 ```
 
-### 3. Start PostgreSQL Database
+### 3. Start PostgreSQL and Redis
 
 ```bash
-# Initialize and start PostgreSQL container
+# Initialize and start PostgreSQL + Redis containers
 npm run db:up
 
-# Verify the database is running
-docker ps | grep mini-crm-postgres
+# Verify containers are running
+docker ps | grep -E "db|redis"
 
 # Wait for database to be ready (healthcheck)
 sleep 5

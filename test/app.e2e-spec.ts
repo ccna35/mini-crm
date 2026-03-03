@@ -5,7 +5,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
-import { Status } from '@prisma/client';
+import { LeadStatus } from '@prisma/client';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 
@@ -71,7 +71,7 @@ describe('Mini CRM API (e2e)', () => {
           expect(res.body.data).toHaveProperty('id');
           expect(res.body.data.name).toBe('John Doe');
           expect(res.body.data.email).toBe('john@example.com');
-          expect(res.body.data.status).toBe(Status.NEW);
+          expect(res.body.data.status).toBe(LeadStatus.NEW);
         });
     });
 
@@ -123,17 +123,17 @@ describe('Mini CRM API (e2e)', () => {
           {
             name: 'Lead 1',
             email: 'lead1@example.com',
-            status: Status.NEW,
+            status: LeadStatus.NEW,
           },
           {
             name: 'Lead 2',
             email: 'lead2@example.com',
-            status: Status.CONTACTED,
+            status: LeadStatus.CONTACTED,
           },
           {
             name: 'Lead 3',
             email: 'lead3@example.com',
-            status: Status.PROPOSAL,
+            status: LeadStatus.PROPOSAL,
           },
         ],
       });
@@ -168,7 +168,7 @@ describe('Mini CRM API (e2e)', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.data.total).toBe(1);
-          expect(res.body.data.data[0].status).toBe(Status.CONTACTED);
+          expect(res.body.data.data[0].status).toBe(LeadStatus.CONTACTED);
         });
     });
 
@@ -207,9 +207,7 @@ describe('Mini CRM API (e2e)', () => {
     });
 
     it('should return 404 for non-existent lead', () => {
-      return request(app.getHttpServer())
-        .get('/api/leads/nonexistent')
-        .expect(404);
+      return request(app.getHttpServer()).get('/api/leads/nonexistent').expect(404);
     });
   });
 
@@ -230,12 +228,12 @@ describe('Mini CRM API (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/api/leads/${leadId}`)
         .send({
-          status: Status.CONTACTED,
+          status: LeadStatus.CONTACTED,
           phone: '+1-555-9999',
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.status).toBe(Status.CONTACTED);
+          expect(res.body.data.status).toBe(LeadStatus.CONTACTED);
           expect(res.body.data.phone).toBe('+1-555-9999');
         });
     });
@@ -244,7 +242,7 @@ describe('Mini CRM API (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/api/leads/${leadId}`)
         .send({
-          status: Status.LOST,
+          status: LeadStatus.LOST,
         })
         .expect(400);
     });
@@ -253,12 +251,12 @@ describe('Mini CRM API (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/api/leads/${leadId}`)
         .send({
-          status: Status.LOST,
+          status: LeadStatus.LOST,
           lostReason: 'Budget constraints',
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.status).toBe(Status.LOST);
+          expect(res.body.data.status).toBe(LeadStatus.LOST);
           expect(res.body.data.lostReason).toBe('Budget constraints');
         });
     });
@@ -267,11 +265,11 @@ describe('Mini CRM API (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/api/leads/${leadId}`)
         .send({
-          status: Status.PROPOSAL,
+          status: LeadStatus.PROPOSAL,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.status).toBe(Status.PROPOSAL);
+          expect(res.body.data.status).toBe(LeadStatus.PROPOSAL);
           expect(res.body.data.nextFollowUpAt).toBeTruthy();
         });
     });
@@ -280,11 +278,11 @@ describe('Mini CRM API (e2e)', () => {
       return request(app.getHttpServer())
         .patch(`/api/leads/${leadId}`)
         .send({
-          status: Status.WON,
+          status: LeadStatus.WON,
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.status).toBe(Status.WON);
+          expect(res.body.data.status).toBe(LeadStatus.WON);
           expect(res.body.data.nextFollowUpAt).toBeNull();
         });
     });
@@ -313,9 +311,7 @@ describe('Mini CRM API (e2e)', () => {
     });
 
     it('should return 404 when deleting non-existent lead', () => {
-      return request(app.getHttpServer())
-        .delete('/api/leads/nonexistent')
-        .expect(404);
+      return request(app.getHttpServer()).delete('/api/leads/nonexistent').expect(404);
     });
   });
 
@@ -332,13 +328,13 @@ describe('Mini CRM API (e2e)', () => {
           {
             name: 'Overdue Lead',
             email: 'overdue@example.com',
-            status: Status.CONTACTED,
+            status: LeadStatus.CONTACTED,
             nextFollowUpAt: yesterday,
           },
           {
             name: 'Upcoming Lead',
             email: 'upcoming@example.com',
-            status: Status.PROPOSAL,
+            status: LeadStatus.PROPOSAL,
             nextFollowUpAt: tomorrow,
           },
         ],
@@ -371,9 +367,9 @@ describe('Mini CRM API (e2e)', () => {
 
       await prisma.lead.createMany({
         data: [
-          { name: 'Lead 1', email: 'lead1@example.com', status: Status.NEW },
-          { name: 'Lead 2', email: 'lead2@example.com', status: Status.CONTACTED },
-          { name: 'Lead 3', email: 'lead3@example.com', status: Status.WON },
+          { name: 'Lead 1', email: 'lead1@example.com', status: LeadStatus.NEW },
+          { name: 'Lead 2', email: 'lead2@example.com', status: LeadStatus.CONTACTED },
+          { name: 'Lead 3', email: 'lead3@example.com', status: LeadStatus.WON },
         ],
       });
     });
@@ -390,6 +386,8 @@ describe('Mini CRM API (e2e)', () => {
           expect(stats).toHaveProperty('upcomingFollowups');
           expect(stats).toHaveProperty('winRate');
           expect(stats.totalLeads).toBe(3);
-          expect(stats.leadsByStatus.NEW).toBe(1);
+          expect(stats.leadsByStatus[LeadStatus.NEW]).toBe(1);
         });
     });
+  });
+});

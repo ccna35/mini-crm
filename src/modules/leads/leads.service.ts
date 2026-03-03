@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../../database/prisma.service';
 import { LeadStatus, Lead } from '@prisma/client';
 import { CreateLeadDto, UpdateLeadDto, ListLeadsQueryDto } from './dtos/lead.dto';
@@ -13,7 +15,13 @@ export interface ListLeadsResult {
 
 @Injectable()
 export class LeadsService {
-  constructor(private prisma: PrismaService) {}
+  private static readonly LEADS_LIST_CACHE_TTL_MS = 30_000;
+  private static readonly LEADS_LIST_VERSION_KEY = 'leads:list:version';
+
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   async create(createLeadDto: CreateLeadDto): Promise<Lead> {
     try {
@@ -25,9 +33,13 @@ export class LeadsService {
         data.email = createLeadDto.email;
       }
 
-      return await this.prisma.lead.create({
+      const createdLead = await this.prisma.lead.create({
         data,
       });
+
+      await this.bumpLeadsListCacheVersion();
+
+      return createdLead;
     } catch (error: any) {
       if (error?.code === 'P2002' && error?.meta?.target?.includes('email')) {
         throw new BadRequestException('Email already exists');
@@ -40,6 +52,13 @@ export class LeadsService {
     const page = Math.max(1, parseInt(query.page || '1', 10));
     const limit = Math.max(1, Math.min(100, parseInt(query.limit || '10', 10)));
     const skip = (page - 1) * limit;
+
+    const version = await this.getLeadsListCacheVersion();
+    const cacheKey = this.buildLeadsListCacheKey(version, query, page, limit);
+    const cachedData = await this.cacheManager.get<ListLeadsResult>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const where: any = {};
 
@@ -92,13 +111,17 @@ export class LeadsService {
       this.prisma.lead.count({ where }),
     ]);
 
-    return {
+    const result = {
       data,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     };
+
+    await this.cacheManager.set(cacheKey, result, LeadsService.LEADS_LIST_CACHE_TTL_MS);
+
+    return result;
   }
 
   async findOne(id: string): Promise<Lead> {
@@ -135,7 +158,7 @@ export class LeadsService {
     }
 
     try {
-      return await this.prisma.lead.update({
+      const updatedLead = await this.prisma.lead.update({
         where: { id },
         data: {
           name: updateLeadDto.name,
@@ -155,6 +178,10 @@ export class LeadsService {
               : undefined,
         },
       });
+
+      await this.bumpLeadsListCacheVersion();
+
+      return updatedLead;
     } catch (error: any) {
       if (error?.code === 'P2002') {
         throw new BadRequestException('Email already exists');
@@ -167,9 +194,13 @@ export class LeadsService {
     // Verify lead exists
     await this.findOne(id);
 
-    return await this.prisma.lead.delete({
+    const deletedLead = await this.prisma.lead.delete({
       where: { id },
     });
+
+    await this.bumpLeadsListCacheVersion();
+
+    return deletedLead;
   }
 
   async getOverdueFollowups(): Promise<Lead[]> {
@@ -220,5 +251,53 @@ export class LeadsService {
       source: item.source || 'Unknown',
       count: item._count.source,
     }));
+  }
+
+  private async getLeadsListCacheVersion(): Promise<number> {
+    const cacheVersion = await this.cacheManager.get<number | string>(
+      LeadsService.LEADS_LIST_VERSION_KEY,
+    );
+
+    if (cacheVersion === undefined || cacheVersion === null) {
+      const initialVersion = 1;
+      await this.cacheManager.set(LeadsService.LEADS_LIST_VERSION_KEY, initialVersion);
+      return initialVersion;
+    }
+
+    const numericVersion =
+      typeof cacheVersion === 'number' ? cacheVersion : Number.parseInt(cacheVersion, 10);
+
+    if (Number.isNaN(numericVersion) || numericVersion <= 0) {
+      const initialVersion = 1;
+      await this.cacheManager.set(LeadsService.LEADS_LIST_VERSION_KEY, initialVersion);
+      return initialVersion;
+    }
+
+    return numericVersion;
+  }
+
+  private buildLeadsListCacheKey(
+    version: number,
+    query: ListLeadsQueryDto,
+    page: number,
+    limit: number,
+  ): string {
+    const normalizedQuery = {
+      page,
+      limit,
+      status: query.status ?? null,
+      search: query.search ?? null,
+      source: query.source ?? null,
+      isOverdue: query.isOverdue ?? null,
+      sortBy: query.sortBy ?? null,
+      sortOrder: query.sortOrder ?? null,
+    };
+
+    return `leads:list:v${version}:${JSON.stringify(normalizedQuery)}`;
+  }
+
+  private async bumpLeadsListCacheVersion(): Promise<void> {
+    const currentVersion = await this.getLeadsListCacheVersion();
+    await this.cacheManager.set(LeadsService.LEADS_LIST_VERSION_KEY, currentVersion + 1);
   }
 }
